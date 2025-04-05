@@ -1,0 +1,34 @@
+# General
+*.pyc
+__pycache__/
+.DS_Store
+
+# Backend specific ignores
+backend/Venv/
+backend/venv/ # Add this too, just in case
+backend/.env
+backend/.env.example
+backend/check.json
+backend/cookies.json
+backend/getgrass_io_tweets_and_replies_1.csv
+backend/getgrass_io_tweets_and_replies_2.csv
+backend/getgrass_io_tweets_and_replies.csv
+backend/nodepay_ai_tweets_and_replies_temp.csv
+backend/image.png
+# backend/Test_output.json
+# backend/requirements.txt
+
+# Frontend specific ignores
+frontend/node_modules/
+frontend/.next/ # Often good to ignore Next.js build output too
+# frontend/.bolt/
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+frontend/npm-debug.log*
+frontend/yarn-error.log*
+
+# IDE/Editor specific (optional but recommended)
+.vscode/
+.idea/

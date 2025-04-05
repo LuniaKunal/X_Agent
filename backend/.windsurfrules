@@ -1,0 +1,192 @@
+Based on the provided file structure and requirements, I’ll adapt the template to create `.windsurfrules` for your Twitter Sentiment Analysis project using FastAPI, Twikit for scraping, and the Hugging Face `cardiffnlp/twitter-roberta-base-sentiment` model for sentiment analysis. Here’s the tailored version of the rules:
+
+---
+
+# .Windsurfrules for Twitter Sentiment Analysis FastAPI Backend Project
+
+## Project Overview
+- This project uses **FastAPI** for the backend to perform sentiment analysis on tweets and their replies.
+- The backend handles scraping tweets and replies using the **Twikit** library and analyzes sentiment using the Hugging Face model `cardiffnlp/twitter-roberta-base-sentiment`.
+- Key features include:
+  - Scraping tweets and replies for a given user or topic using Twikit.
+  - Performing sentiment analysis on the scraped data to understand community sentiment.
+  - Providing API endpoints to trigger analysis and return results.
+  - Caching results to improve performance (using `__pycache__` or a similar mechanism if implemented).
+
+---
+
+## Backend Structure
+sentiment-analysis-app/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py                 # Main FastAPI application
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py              # Configuration settings (API keys, etc.) - .env file
+|   |-- db/
+|   |   |-- crud.py                # Database operations
+|   |   |-- database.py            # Database connection
+│   ├── routes/
+│   │   ├── analysis.py            # Routes for sentiment analysis of latest tweets by searching
+|   |   |-- user_tweets.py         # Routes for scraping tweets by username and replies for sentiment analysis
+│   ├── schemas/
+│   │   ├── analysis_request.py    # Pydantic models for request validation
+│   │   ├── analysis_response.py   # Pydantic models for response data
+│   │   ├── user_tweets_request.py # Pydantic models for tweet scraping requests
+│   │   ├── user_tweets_response.py# Pydantic models for tweet scraping responses
+│   ├── services/
+│   │   ├── twitter_service.py     # Logic for interacting with Twikit to scrape tweets/replies
+│   │   ├── sentiment_service.py   # Logic for sentiment analysis using Hugging Face
+│   ├── utils/
+│   │   ├── helpers.py             # Utility functions (e.g., data formatting, caching)
+│   ├── .venv/                     # Virtual environment
+│   ├── .env                       # Environment variables (e.g., Twitter API credentials)
+│   ├── .env.example               # Example environment variables
+│   ├── cookies.json               # Twikit cookies for authentication
+│   ├── requirements.txt           # Project dependencies
+│   ├── README.md                  # Project documentation
+│   ├── ISSUES.md                  # Known issues and todos
+
+---
+
+## Database Configuration
+- This project uses Supabase for database storage to leverage its real-time capabilities and PostgreSQL backend, replacing the need for real-time scraping persistence with a scalable solution.
+- Configure the Supabase client in a centralized database.py file:
+- Load the Supabase URL and API key from environment variables SUPABASE_URL and SUPABASE_KEY.
+- Initialize the Supabase client using the supabase-py library (e.g., create_client(SUPABASE_URL, SUPABASE_KEY)).
+- Provide a get_db function to return the Supabase client instance for use in routes and functions.
+- Supabase tables should be predefined in the Supabase dashboard or via SQL scripts, as this setup focuses on interacting with the database rather than creating it programmatically.
+
+---
+
+## Model Definitions
+- Define data models in models/ as Python classes or dictionaries to match Supabase table schemas.
+- Example model: AnalysisResult (to store tweet IDs, text, and sentiment scores).
+- Fields: tweet_id (string), text (string), sentiment (float), created_at (timestamp).
+- No need for relationships unless explicitly defined in Supabase (e.g., foreign keys for linking tweets to replies).
+- Use the Supabase client in database.py to interact with tables (e.g., supabase.table('AnalysisResult').insert({...}) for inserts or supabase.table('AnalysisResult').select('*') for queries).
+- Ensure models align with the table structure created in Supabase.
+
+---
+
+## Schema Definitions
+- Use **Pydantic** schemas in **`schemas/`** for validating and serializing data.
+- Define separate schemas for requests (input) and responses (output):
+  - `analysis_request.py`: Schema for sentiment analysis input (e.g., tweet text or user handle).
+  - `analysis_response.py`: Schema for sentiment analysis output (e.g., sentiment scores: positive, negative, neutral).
+  - `user_tweets_request.py`: Schema for tweet scraping input (e.g., username, number of tweets).
+  - `user_tweets_response.py`: Schema for tweet scraping output (e.g., list of tweets and replies).
+- Reference these schemas in route definitions for automatic validation and documentation.
+
+---
+
+## CRUD Operations
+- If a database is used, implement reusable CRUD functions in **`crud/`** for each model (e.g., `create_analysis_result`, `get_analysis_results`).
+- Functions should accept a database session and relevant parameters.
+- Use these functions in routes and services to prevent code duplication.
+- Include common features like filtering (e.g., by user or date) and sorting where applicable.
+
+---
+
+## Route Implementations
+- Define API endpoints in **`routes/`** using FastAPI’s `APIRouter`.
+- Example routes in `analysis.py`:
+  - `POST /analyze`: Analyze sentiment for a given tweet or set of tweets.
+  - `GET /tweets/{username}`: Scrape tweets and replies for a given username.
+- Inject dependencies (e.g., database sessions with **`Depends(get_db)`** if applicable).
+- Use Pydantic schemas to specify request and response models.
+- Use tags (e.g., `tags=["sentiment"]`, `tags=["tweets"]`) for organization and documentation.
+
+---
+
+## Service Layer
+- Encapsulate complex business logic in **`services/`**.
+- **`twitter_service.py`**:
+  - Handles interaction with **Twikit** for scraping tweets and replies.
+  - Authenticate using credentials stored in `cookies.json` or environment variables.
+  - Return structured data (e.g., tweet text, reply text, metadata).
+- **`sentiment_service.py`**:
+  - Integrates with the Hugging Face `cardiffnlp/twitter-roberta-base-sentiment` model.
+  - Processes tweet/reply text and returns sentiment scores (positive, negative, neutral).
+  - Cache results if implemented (e.g., store in SQLite or a file-based cache).
+- Keep services modular and focused on specific tasks (e.g., scraping, sentiment analysis).
+
+---
+
+## External API Integrations
+- For **Twikit** (Twitter scraping):
+  - Store Twitter API credentials or cookies in `cookies.json` or environment variables (e.g., `TWITTER_USERNAME`, `TWITTER_PASSWORD`).
+  - Implement error handling (e.g., retries, rate limit handling) for API calls.
+  - Transform scraped data into a format suitable for sentiment analysis (e.g., list of tweet texts).
+- For **Hugging Face** (`cardiffnlp/twitter-roberta-base-sentiment`):
+  - Load the model using the `transformers` library from Hugging Face.
+  - Ensure the model is downloaded and cached locally (e.g., via `__pycache__` or Hugging Face’s caching mechanism).
+  - Handle errors (e.g., model loading failures, invalid input text).
+- Ensure secure and efficient communication with external services.
+
+---
+
+## Environment Management
+- Store sensitive data (e.g., Twitter credentials, API keys) in a **`.env`** file.
+- Example `.env` entries:
+  ```
+  TWITTER_USERNAME=your_username
+  TWITTER_PASSWORD=your_password
+  DATABASE_URL=sqlite:///sentiment.db  # If using SQLite
+  ```
+- Load variables using **`python-dotenv`** in relevant files (e.g., `config.py`).
+- Avoid hardcoding sensitive information in the codebase.
+
+---
+
+## Best Practices
+### Do:
+- **Use dependency injection** for shared resources (e.g., database sessions if used).
+- **Validate all data** with Pydantic schemas in API endpoints.
+- **Reuse code** via services to minimize duplication (e.g., reuse sentiment analysis logic).
+- **Follow RESTful design** (e.g., use `POST` for analysis, `GET` for retrieval, appropriate status codes).
+- **Log key events** (e.g., errors, API calls) for debugging and monitoring.
+- **Write tests** for critical components (services, routes).
+
+### Don’t:
+- **Hardcode sensitive data** like Twitter credentials or API keys.
+- **Duplicate logic**; abstract it into reusable functions or services.
+- **Expose sensitive information** (e.g., Twitter credentials, raw tweet data) in responses.
+- **Overcomplicate routes**; delegate business logic to services.
+- **Ignore exceptions**; handle errors gracefully in all operations (e.g., rate limits, model failures).
+
+---
+
+## Specific Requirements
+- **Tweet Scraping**:
+  - Provide routes to scrape tweets and replies for a given username using Twikit.
+  - Use `twitter_service.py` to handle scraping logic and return structured data.
+- **Sentiment Analysis**:
+  - Implement routes to analyze sentiment for scraped tweets and replies.
+  - Use `sentiment_service.py` to process text with the `cardiffnlp/twitter-roberta-base-sentiment` model.
+  - Return sentiment scores (positive, negative, neutral) for each tweet/reply.
+- **Community Insights**:
+  - Aggregate sentiment scores to provide an overall view of community sentiment (e.g., average sentiment for a user’s tweets).
+  - Consider visualizations or summary statistics (e.g., percentage of positive tweets).
+- **Caching**:
+  - Cache sentiment analysis results to avoid redundant computations (e.g., store in SQLite or a file-based cache).
+  - Use `__pycache__` or a custom caching mechanism if already implemented.
+
+---
+
+## Large Codebase Management
+- **Modularize**: Split code by feature (e.g., scraping, sentiment analysis) for clarity.
+- **Naming Conventions**: Use consistent, descriptive names (e.g., `twitter_service.py`, `sentiment_service.py`).
+- **Documentation**: Add comments and docstrings for complex logic (e.g., Twikit authentication, model inference).
+- **Version Control**: Use Git with clear commit messages and feature branches.
+- **Testing**: Automate unit and integration tests to ensure stability (e.g., test scraping, test sentiment analysis).
+- **Performance**: Optimize API calls (e.g., batch requests to Twikit, cache model inferences) and monitor API performance.
+
+---
+
+This `.windsurfrules` file ensures that the AI assistant maintains a consistent, scalable, and high-quality FastAPI backend for Twitter Sentiment Analysis. It provides clear guidelines for code structure, best practices, and feature implementation while avoiding common pitfalls in a large codebase.
+
+---
+
+Let me know if you'd like to dive deeper into any specific section, like implementing a particular route or service!
