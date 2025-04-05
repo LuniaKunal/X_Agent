@@ -7,7 +7,7 @@ __pycache__/
 backend/Venv/
 backend/venv/ # Add this too, just in case
 backend/.env
-backend/.env.example
+# backend/.env.example
 backend/check.json
 backend/cookies.json
 backend/getgrass_io_tweets_and_replies_1.csv
