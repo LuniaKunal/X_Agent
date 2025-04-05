@@ -44,6 +44,3 @@ transformers
 torch
 aiofiles
 supabase
-
-Database --> Supabase:
-Pass --> X_Agent@!123
